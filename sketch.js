@@ -202,7 +202,7 @@ function initializeGame() {
 
 // Fetch leaderboard data from our API
 function fetchLeaderboard() {
-    fetch('/api/leaderboard')
+    fetch('https://space-shooter-2w1dpcw8y-nurgaliyevs-projects.vercel.app/api/leaderboard')
         .then(response => response.json())
         .then(data => {
             leaderboard = data;
@@ -216,7 +216,7 @@ function fetchLeaderboard() {
 // Submit score to the leaderboard
 function submitScore(email, score) {
     isSubmittingScore = true;
-    fetch('/api/submit-score', {
+    fetch('https://space-shooter-2w1dpcw8y-nurgaliyevs-projects.vercel.app/api/submit-score', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
