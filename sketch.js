@@ -13,7 +13,8 @@ let soundEnabled = false;
 let backgroundOsc;
 let laserOsc;
 let explosionOsc;
-let gameOverSound;
+let engineOsc;
+let gameOverOsc;
 let powerUpSound;
 
 function setup() {
@@ -40,9 +41,19 @@ function setupSound() {
     explosionOsc = new p5.Noise();
     explosionOsc.amp(0);
     
+    // Create engine thrust sound
+    engineOsc = new p5.Oscillator('sawtooth');
+    engineOsc.freq(100);
+    engineOsc.amp(0);
+    
+    // Create game over sound
+    gameOverOsc = new p5.Oscillator('square');
+    gameOverOsc.amp(0);
+    
     // Start background sound
     if (soundEnabled) {
       backgroundOsc.start();
+      engineOsc.start();
     }
   } catch (e) {
     console.log('Sound system not available:', e);
@@ -70,11 +81,48 @@ function playExplosionSound() {
   }
 }
 
+// Play engine sound
+function updateEngineSound() {
+  if (soundEnabled && engineOsc) {
+    if (keyIsDown(UP_ARROW)) {
+      // Ramp up engine sound
+      engineOsc.freq(150 + random(20));
+      engineOsc.amp(0.1, 0.1);
+    } else {
+      // Idle engine sound
+      engineOsc.freq(100);
+      engineOsc.amp(0.02, 0.1);
+    }
+  }
+}
+
+// Play game over sound sequence
+function playGameOverSound() {
+  if (soundEnabled && gameOverOsc) {
+    gameOverOsc.start();
+    // Descending pitch sequence
+    const notes = [880, 784, 698, 587, 523, 440, 392, 349];
+    let delay = 0;
+    notes.forEach((freq, i) => {
+      setTimeout(() => {
+        gameOverOsc.freq(freq);
+        gameOverOsc.amp(0.2);
+        if (i === notes.length - 1) {
+          setTimeout(() => gameOverOsc.amp(0, 0.5), 200);
+        }
+      }, delay);
+      delay += 200;
+    });
+  }
+}
+
 // Stop all sounds
 function stopAllSounds() {
   if (backgroundOsc) backgroundOsc.stop();
   if (laserOsc) laserOsc.stop();
   if (explosionOsc) explosionOsc.stop();
+  if (engineOsc) engineOsc.stop();
+  if (gameOverOsc) gameOverOsc.stop();
 }
 
 function initializeGame() {
@@ -184,8 +232,9 @@ function draw() {
     }
     for (let enemy of enemies) {
       if (dist(player.x, player.y, enemy.x, enemy.y) < player.radius + enemy.radius) {
-        gameOver = true; // End game on player-enemy collision
-        stopAllSounds(); // Stop all sounds
+        gameOver = true;
+        stopAllSounds();
+        playGameOverSound();
         break;
       }
     }
@@ -240,6 +289,11 @@ class Player {
     if (keyIsDown(UP_ARROW)) {
       this.vx += this.acceleration * (-sin(this.angle));
       this.vy += this.acceleration * (-cos(this.angle));
+      // Update engine sound when thrusting
+      updateEngineSound();
+    } else {
+      // Idle engine sound when not thrusting
+      updateEngineSound();
     }
 
     // Add brake/reverse with DOWN arrow
@@ -428,20 +482,44 @@ function drawScore() {
 
 // Update game over screen
 function drawGameOver() {
-  background(0, 0, 0, 200);
+  // Retro CRT effect
+  for (let i = 0; i < height; i += 4) {
+    noStroke();
+    fill(0, 0, 0, 150);
+    rect(0, i, width, 2);
+  }
+  
+  // Glitch effect
+  if (frameCount % 20 < 2) {
+    push();
+    translate(random(-5, 5), random(-5, 5));
+    fill(255, 0, 0, 100);
+    textSize(42);
+    textAlign(CENTER);
+    text("AI CORE TERMINATED", width/2, height/2 - 40);
+    pop();
+  }
+  
+  // Normal text with glow
+  drawingContext.shadowBlur = 20;
+  drawingContext.shadowColor = '#0066ff';
   fill(0, 150, 255);
   textSize(42);
   textAlign(CENTER);
   text("AI CORE TERMINATED", width/2, height/2 - 40);
+  
+  // Score with glow
   textSize(24);
   fill(255);
   text("Neural Network Score: " + score, width/2, height/2 + 20);
-  text("Press SPACE to Reboot System", width/2, height/2 + 60);
   
-  // Add visual pulse to the restart text
+  // Blinking restart text
   let pulseColor = map(sin(frameCount * 0.1), -1, 1, 100, 255);
   fill(0, 150, pulseColor);
   text("Press SPACE to Reboot System", width/2, height/2 + 60);
+  
+  // Reset shadow
+  drawingContext.shadowBlur = 0;
 }
 
 // Update keyPressed function
