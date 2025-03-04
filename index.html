@@ -3,10 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>p5.js Project</title>
+    <title>AI Space Shooter</title>
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGwSURBVFhH7ZY9TsNAEIXXQAEFPQIhISGBRMMJKDgBZ+AQHIkj0NJwBAQNP6KgoAHxI4SQgGw+L7tKnMTxetdxQZ70lPV6Z97O7njXqdVqtVqtVqt1WL1e7xz38Qnf8AeNr/iK93iFUzwVrRyDTfAZX/ELv/Oj8RNf8AYXeIxDEY0wxhme4wO+o/30l/iEVhTXuEsyR2QY7xnOcYZN8Q7RxQme4SnGiE7QCtZ4i1d4gUdYwgTPMEZ0hEPRGBPc4BZtGV7QltxuLtF2wvgcC7DBT/zGLZawhTEiW/ogGmOMO7SbsJ94wCVaIXYzxk+0nRjiAEtYYYzIRqGIxpjgHZ7gFK3PVmDLbQVs6e2GjM/Qdse4wEu0G7KbsJ+wm7FCtJ+wgmxJrBBbejvFIdoSxYhsDHJEY0zQHhz2jLdnuP3Dl2gPG3tm2w3YjjzjDK0QK8B2wG7CCrHdMN7GYYExIivk34hGGOMc7cHxgFaIPbftJ6wQe27bKdoOWQFWkD2zS0UjjPEE7SfXaMtty2zPbNsF2wUrwnbDdqNUNFar1Wq1Wq0/qdV+AYAfFnYjVnKbAAAAAElFTkSuQmCC">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-    <script src="sketch.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #000;
+            overflow: hidden;
+        }
+        canvas {
+            border: 2px solid #0066ff;
+            box-shadow: 0 0 20px #0066ff;
+        }
+        #p5_loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #0066ff;
+            font-family: monospace;
+            font-size: 24px;
+            text-shadow: 0 0 10px #0066ff;
+        }
+    </style>
 </head>
 <body>
+    <div id="p5_loading">Initializing AI Core...</div>
+    <script>
+        // Ensure audio context is started on user interaction
+        window.addEventListener('click', function() {
+            if (typeof getAudioContext === 'function') {
+                getAudioContext().resume();
+            }
+        });
+    </script>
+    <script src="sketch.js"></script>
 </body>
 </html>

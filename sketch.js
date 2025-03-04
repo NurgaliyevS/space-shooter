@@ -8,10 +8,90 @@ let gameOver = false;
 let lastShotTime = 0;
 let neuralPatterns = []; // For background effect
 
+// Sound variables
+let soundEnabled = false;
+let backgroundOsc;
+let laserOsc;
+let explosionOsc;
+let gameOverSound;
+let powerUpSound;
+
 function setup() {
   createCanvas(800, 600);
+  initializeGame();
+  setupSound();
+}
+
+function setupSound() {
+  try {
+    getAudioContext().resume();
+    soundEnabled = true;
+
+    // Create background ambient sound
+    backgroundOsc = new p5.Oscillator('sine');
+    backgroundOsc.freq(220);
+    backgroundOsc.amp(0.1);
+    
+    // Create laser sound oscillator
+    laserOsc = new p5.Oscillator('square');
+    laserOsc.amp(0);
+    
+    // Create explosion sound
+    explosionOsc = new p5.Noise();
+    explosionOsc.amp(0);
+    
+    // Start background sound
+    if (soundEnabled) {
+      backgroundOsc.start();
+    }
+  } catch (e) {
+    console.log('Sound system not available:', e);
+  }
+}
+
+// Play laser sound
+function playLaserSound() {
+  if (soundEnabled && laserOsc) {
+    laserOsc.start();
+    laserOsc.freq(880);
+    laserOsc.amp(0.1, 0);
+    laserOsc.amp(0, 0.1);
+    setTimeout(() => laserOsc.stop(), 100);
+  }
+}
+
+// Play explosion sound
+function playExplosionSound() {
+  if (soundEnabled && explosionOsc) {
+    explosionOsc.start();
+    explosionOsc.amp(0.3, 0);
+    explosionOsc.amp(0, 0.2);
+    setTimeout(() => explosionOsc.stop(), 200);
+  }
+}
+
+// Stop all sounds
+function stopAllSounds() {
+  if (backgroundOsc) backgroundOsc.stop();
+  if (laserOsc) laserOsc.stop();
+  if (explosionOsc) explosionOsc.stop();
+}
+
+function initializeGame() {
+  // Reset game state
   player = new Player(width / 2, height / 2, 20);
+  enemies = [];
+  bullets = [];
+  score = 0;
+  gameOver = false;
+  
+  // Restart background sound
+  if (soundEnabled && backgroundOsc) {
+    backgroundOsc.start();
+  }
+  
   // Generate neural network background patterns
+  neuralPatterns = [];
   for (let i = 0; i < 20; i++) {
     neuralPatterns.push({
       x: random(width),
@@ -27,7 +107,9 @@ function setup() {
       });
     }
   }
+  
   // Generate stars
+  stars = [];
   for (let i = 0; i < 100; i++) {
     stars.push({ x: random(width), y: random(height), size: random(1, 3) });
   }
@@ -86,6 +168,7 @@ function draw() {
       let bvy = -cos(player.angle) * 5;
       bullets.push(new Bullet(bx, by, bvx, bvy));
       lastShotTime = millis();
+      playLaserSound(); // Play laser sound
     }
 
     // Check collisions
@@ -95,12 +178,14 @@ function draw() {
           bullet.isAlive = false;
           enemy.isAlive = false;
           score += 1; // Increment score on hit
+          playExplosionSound(); // Play explosion sound
         }
       }
     }
     for (let enemy of enemies) {
       if (dist(player.x, player.y, enemy.x, enemy.y) < player.radius + enemy.radius) {
         gameOver = true; // End game on player-enemy collision
+        stopAllSounds(); // Stop all sounds
         break;
       }
     }
@@ -352,4 +437,16 @@ function drawGameOver() {
   fill(255);
   text("Neural Network Score: " + score, width/2, height/2 + 20);
   text("Press SPACE to Reboot System", width/2, height/2 + 60);
+  
+  // Add visual pulse to the restart text
+  let pulseColor = map(sin(frameCount * 0.1), -1, 1, 100, 255);
+  fill(0, 150, pulseColor);
+  text("Press SPACE to Reboot System", width/2, height/2 + 60);
+}
+
+// Update keyPressed function
+function keyPressed() {
+  if (gameOver && keyCode === 32) { // SPACE key
+    initializeGame();
+  }
 }
