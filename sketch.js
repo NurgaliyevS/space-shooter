@@ -15,6 +15,14 @@ let gameOver = false;
 let lastShotTime = 0;
 let neuralPatterns = []; // For background effect
 
+// Leaderboard variables
+let leaderboard = [];
+let showEmailInput = false;
+let emailInput = '';
+let isSubmittingScore = false;
+let submitMessage = '';
+let submitMessageTimer = 0;
+
 // Sound variables
 let soundEnabled = false;
 let laserOsc;
@@ -25,9 +33,10 @@ let brakeOsc;     // Brake sound
 let gameOverOsc;
 
 function setup() {
-    createCanvas(800, 600);
+    createCanvas(1000, 600); // Increased width to accommodate leaderboard
     initializeGame();
     setupSound();
+    fetchLeaderboard();
 }
 
 function setupSound() {
@@ -191,6 +200,50 @@ function initializeGame() {
     }
 }
 
+// Fetch leaderboard data from our API
+function fetchLeaderboard() {
+    fetch('/api/leaderboard')
+        .then(response => response.json())
+        .then(data => {
+            leaderboard = data;
+            console.log(data, 'data');
+        })
+        .catch(error => {
+            console.error('Error fetching leaderboard:', error);
+        });
+}
+
+// Submit score to the leaderboard
+function submitScore(email, score) {
+    isSubmittingScore = true;
+    fetch('/api/submit-score', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, score }),
+    })
+        .then(response => response.json())
+        .then(data => {
+            isSubmittingScore = false;
+            submitMessage = 'Score submitted!';
+            submitMessageTimer = 120; // Show message for 2 seconds
+            fetchLeaderboard(); // Refresh leaderboard
+        })
+        .catch(error => {
+            isSubmittingScore = false;
+            submitMessage = 'Error submitting score';
+            submitMessageTimer = 120;
+            console.error('Error submitting score:', error);
+        });
+}
+
+// Add this function to check if email is valid
+function isValidEmail(email) {
+    // Simple email validation - must contain @ and at least one dot after @
+    return email.includes('@') && email.indexOf('.', email.indexOf('@')) > email.indexOf('@');
+}
+
 function draw() {
     background(0);
     
@@ -261,6 +314,8 @@ function draw() {
         for (let enemy of enemies) {
             if (dist(player.x, player.y, enemy.x, enemy.y) < player.radius + enemy.radius) {
                 gameOver = true;
+                showEmailInput = true; // Automatically show email input
+                emailInput = '';
                 stopAllSounds();
                 playGameOverSound();
                 break;
@@ -282,8 +337,20 @@ function draw() {
 
         // Display score
         drawScore();
+        
+        // Draw leaderboard on the right side
+        drawLeaderboard();
     } else {
         drawGameOver();
+    }
+    
+    // Show submit message if needed
+    if (submitMessageTimer > 0) {
+        fill(255);
+        textAlign(CENTER);
+        textSize(20);
+        text(submitMessage, width/2, height - 50);
+        submitMessageTimer--;
     }
 }
 
@@ -463,11 +530,40 @@ class Bullet {
 function drawScore() {
     fill(0, 150, 255);
     noStroke();
-    rect(10, 10, 150, 30, 5);
+    rect(10, 10, 180, 30, 5);  // Increased width from 150 to 200
     fill(255);
     textSize(16);
     textAlign(LEFT, CENTER);
     text("NEURAL SCORE: " + score, 20, 25);
+}
+
+// Draw leaderboard
+function drawLeaderboard() {
+    // Draw leaderboard background
+    fill(0, 50, 100, 150);
+    rect(800, 0, 200, height);
+    
+    // Draw leaderboard title
+    fill(0, 200, 255);
+    textSize(20);
+    textAlign(CENTER);
+    text("LEADERBOARD", 900, 30);
+    
+    // Draw leaderboard entries
+    fill(255);
+    textSize(16);
+    textAlign(LEFT);
+    for (let i = 0; i < leaderboard.length && i < 10; i++) {
+        let entry = leaderboard[i];
+        let displayEmail = entry.email;
+        if (displayEmail.length > 12) {
+            displayEmail = displayEmail.substring(0, 9) + '...';
+        }
+        text(`${i+1}. ${displayEmail}`, 820, 70 + i * 30);
+        textAlign(RIGHT);
+        text(entry.score, 980, 70 + i * 30);
+        textAlign(LEFT);
+    }
 }
 
 // Draw game over screen
@@ -481,7 +577,7 @@ function drawGameOver() {
         for(let j = -2; j <= 2; j++) {
             if(i !== 0 || j !== 0) {
                 fill(255, 0, 0);
-                text("GAME OVER", width/2 + i, height/2 - 40 + j);
+                text("GAME OVER", width/2, height/2 - 40 + j);
             }
         }
     }
@@ -491,20 +587,101 @@ function drawGameOver() {
     textSize(24);
     fill(255);
     text("FINAL SCORE: " + score, width/2, height/2 + 40);
-    if (frameCount % 60 < 30) {
-        textSize(20);
+    
+    // Email input for leaderboard
+    if (showEmailInput) {
+        // Draw input box background
+        fill(0, 50, 100);
+        rect(width/2 - 150, height/2 + 80, 300, 40, 5);
+        
+        // Draw input box border
+        strokeWeight(2);
+        stroke(0, 150, 255);
+        noFill();
+        rect(width/2 - 150, height/2 + 80, 300, 40, 5);
+        
+        // Draw email text with cursor
         fill(255);
-        text("PRESS SPACE TO CONTINUE", width/2, height/2 + 80);
+        textAlign(CENTER, CENTER);
+        textSize(18);
+        noStroke();
+        text(emailInput + (frameCount % 60 < 30 ? "" : ""), width/2, height/2 + 100);
+        
+        // Show validation status
+        if (emailInput.length > 0) {
+            if (isValidEmail(emailInput)) {
+                fill(0, 255, 0);
+                text("✓", width/2 + 160, height/2 + 100);
+            } else {
+                fill(255, 0, 0);
+                text("✗", width/2 + 160, height/2 + 100);
+            }
+        }
+        
+        // Instructions
+        textSize(14);
+        fill(0, 200, 255);
+        text("Enter your email and press ENTER", width/2, height/2 + 140);
+        text("Press ESC to cancel", width/2, height/2 + 160);
+        
+        if (isSubmittingScore) {
+            fill(255);
+            textSize(16);
+            text("Submitting score...", width/2, height/2 + 190);
+        }
+    } else {
+        if (frameCount % 60 < 30) {
+            textSize(20);
+            fill(255);
+            text("PRESS SPACE TO CONTINUE", width/2, height/2 + 80);
+            text("PRESS E TO SUBMIT SCORE", width/2, height/2 + 110);
+        }
     }
+    
     for (let y = 0; y < height; y += 4) {
         stroke(0, 0, 0, 50);
         line(0, y, width, y);
     }
+    
+    // Draw leaderboard
+    drawLeaderboard();
 }
 
-// Key press handling
+// Modify keyPressed function
 function keyPressed() {
-    if (gameOver && keyCode === 32) {
-        initializeGame();
+    if (gameOver) {
+        if (keyCode === 32 && !showEmailInput) {
+            // Space to restart
+            initializeGame();
+        } else if (keyCode === 69 && !showEmailInput) {
+            // 'E' to enter email
+            showEmailInput = true;
+            emailInput = '';
+        } else if (showEmailInput) {
+            if (keyCode === ENTER && isValidEmail(emailInput)) {
+                // Submit score
+                submitScore(emailInput, score);
+                showEmailInput = false;
+            } else if (keyCode === ESCAPE) {
+                // Cancel email input
+                showEmailInput = false;
+            } else if (keyCode === BACKSPACE) {
+                // Handle backspace
+                emailInput = emailInput.slice(0, -1);
+            }
+            // We'll handle character input in keyTyped instead
+        }
     }
+}
+
+// Add keyTyped function for better character handling
+function keyTyped() {
+    if (gameOver && showEmailInput && emailInput.length < 30) {
+        // This captures the actual typed character including dots
+        if (key.length === 1) {
+            emailInput += key;
+        }
+        return false; // Prevent default behavior
+    }
+    return true;
 }

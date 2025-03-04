@@ -1,0 +1,24 @@
+{
+  "name": "space-shooter",
+  "version": "1.0.0",
+  "description": "AI Space Shooter with Leaderboard",
+  "main": "sketch.js",
+  "scripts": {
+    "test": "node test-api.js",
+    "dev": "vercel dev",
+    "deploy": "vercel"
+  },
+  "keywords": [
+    "game",
+    "space-shooter",
+    "p5js",
+    "mongodb",
+    "vercel"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "mongodb": "^6.3.0"
+  }
+}
