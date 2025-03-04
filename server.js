@@ -9,7 +9,10 @@ const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST']
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '/')));
 
