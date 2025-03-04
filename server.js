@@ -60,7 +60,7 @@ app.post('/api/submit-score', async (req, res) => {
     const { email, score } = req.body;
     
     // Validate input
-    if (!email || !score) {
+    if (!email || score === undefined || score === null) {
       return res.status(400).json({ error: 'Email and score are required' });
     }
     
