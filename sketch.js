@@ -10,10 +10,9 @@ let neuralPatterns = []; // For background effect
 
 // Sound variables
 let soundEnabled = false;
-let backgroundOsc;
 let laserOsc;
 let explosionOsc;
-let engineOsc;
+let thrusterOsc;  // Simple thruster sound
 let gameOverOsc;
 let powerUpSound;
 
@@ -27,11 +26,6 @@ function setupSound() {
   try {
     getAudioContext().resume();
     soundEnabled = true;
-
-    // Create background ambient sound
-    backgroundOsc = new p5.Oscillator('sine');
-    backgroundOsc.freq(220);
-    backgroundOsc.amp(0.1);
     
     // Create laser sound oscillator
     laserOsc = new p5.Oscillator('square');
@@ -41,19 +35,18 @@ function setupSound() {
     explosionOsc = new p5.Noise();
     explosionOsc.amp(0);
     
-    // Create engine thrust sound
-    engineOsc = new p5.Oscillator('sawtooth');
-    engineOsc.freq(100);
-    engineOsc.amp(0);
+    // Create simple thruster sound
+    thrusterOsc = new p5.Oscillator('square');
+    thrusterOsc.freq(200);
+    thrusterOsc.amp(0);
     
     // Create game over sound
     gameOverOsc = new p5.Oscillator('square');
     gameOverOsc.amp(0);
     
-    // Start background sound
+    // Start thruster
     if (soundEnabled) {
-      backgroundOsc.start();
-      engineOsc.start();
+      thrusterOsc.start();
     }
   } catch (e) {
     console.log('Sound system not available:', e);
@@ -81,17 +74,15 @@ function playExplosionSound() {
   }
 }
 
-// Play engine sound
+// Play engine sound - now a simple retro thruster sound
 function updateEngineSound() {
-  if (soundEnabled && engineOsc) {
+  if (soundEnabled && thrusterOsc) {
     if (keyIsDown(UP_ARROW)) {
-      // Ramp up engine sound
-      engineOsc.freq(150 + random(20));
-      engineOsc.amp(0.1, 0.1);
+      // Simple arcade thruster sound
+      thrusterOsc.freq(200);
+      thrusterOsc.amp(0.05, 0.1);
     } else {
-      // Idle engine sound
-      engineOsc.freq(100);
-      engineOsc.amp(0.02, 0.1);
+      thrusterOsc.amp(0, 0.1);
     }
   }
 }
@@ -100,28 +91,34 @@ function updateEngineSound() {
 function playGameOverSound() {
   if (soundEnabled && gameOverOsc) {
     gameOverOsc.start();
-    // Descending pitch sequence
-    const notes = [880, 784, 698, 587, 523, 440, 392, 349];
-    let delay = 0;
-    notes.forEach((freq, i) => {
+    // Classic arcade game over sequence
+    const sequence = [
+      { freq: 440, duration: 100 },  // A4
+      { freq: 349.23, duration: 100 },  // F4
+      { freq: 293.66, duration: 100 },  // D4
+      { freq: 261.63, duration: 300 },  // C4
+      { freq: 207.65, duration: 400 }   // G#3
+    ];
+    
+    let totalDelay = 0;
+    sequence.forEach(({ freq, duration }) => {
       setTimeout(() => {
         gameOverOsc.freq(freq);
         gameOverOsc.amp(0.2);
-        if (i === notes.length - 1) {
-          setTimeout(() => gameOverOsc.amp(0, 0.5), 200);
-        }
-      }, delay);
-      delay += 200;
+        setTimeout(() => gameOverOsc.amp(0, 0.1), duration - 50);
+      }, totalDelay);
+      totalDelay += duration;
     });
+    
+    setTimeout(() => gameOverOsc.stop(), totalDelay + 100);
   }
 }
 
 // Stop all sounds
 function stopAllSounds() {
-  if (backgroundOsc) backgroundOsc.stop();
   if (laserOsc) laserOsc.stop();
   if (explosionOsc) explosionOsc.stop();
-  if (engineOsc) engineOsc.stop();
+  if (thrusterOsc) thrusterOsc.stop();
   if (gameOverOsc) gameOverOsc.stop();
 }
 
@@ -133,9 +130,9 @@ function initializeGame() {
   score = 0;
   gameOver = false;
   
-  // Restart background sound
-  if (soundEnabled && backgroundOsc) {
-    backgroundOsc.start();
+  // Start thruster sound
+  if (soundEnabled) {
+    thrusterOsc.start();
   }
   
   // Generate neural network background patterns
@@ -482,44 +479,46 @@ function drawScore() {
 
 // Update game over screen
 function drawGameOver() {
-  // Retro CRT effect
-  for (let i = 0; i < height; i += 4) {
-    noStroke();
-    fill(0, 0, 0, 150);
-    rect(0, i, width, 2);
+  background(0);
+  
+  // Draw pixelated "GAME OVER" text
+  push();
+  textAlign(CENTER, CENTER);
+  textSize(72);
+  textStyle(BOLD);
+  
+  // Red outline/shadow effect
+  for(let i = -2; i <= 2; i++) {
+    for(let j = -2; j <= 2; j++) {
+      if(i !== 0 || j !== 0) {
+        fill(255, 0, 0);
+        text("GAME OVER", width/2 + i, height/2 - 40 + j);
+      }
+    }
   }
   
-  // Glitch effect
-  if (frameCount % 20 < 2) {
-    push();
-    translate(random(-5, 5), random(-5, 5));
-    fill(255, 0, 0, 100);
-    textSize(42);
-    textAlign(CENTER);
-    text("AI CORE TERMINATED", width/2, height/2 - 40);
-    pop();
-  }
+  // Yellow main text
+  fill(255, 255, 0);
+  text("GAME OVER", width/2, height/2 - 40);
+  pop();
   
-  // Normal text with glow
-  drawingContext.shadowBlur = 20;
-  drawingContext.shadowColor = '#0066ff';
-  fill(0, 150, 255);
-  textSize(42);
-  textAlign(CENTER);
-  text("AI CORE TERMINATED", width/2, height/2 - 40);
-  
-  // Score with glow
+  // Score display
   textSize(24);
   fill(255);
-  text("Neural Network Score: " + score, width/2, height/2 + 20);
+  text("FINAL SCORE: " + score, width/2, height/2 + 40);
   
   // Blinking restart text
-  let pulseColor = map(sin(frameCount * 0.1), -1, 1, 100, 255);
-  fill(0, 150, pulseColor);
-  text("Press SPACE to Reboot System", width/2, height/2 + 60);
+  if (frameCount % 60 < 30) {
+    textSize(20);
+    fill(255);
+    text("PRESS SPACE TO CONTINUE", width/2, height/2 + 80);
+  }
   
-  // Reset shadow
-  drawingContext.shadowBlur = 0;
+  // Scanline effect
+  for (let y = 0; y < height; y += 4) {
+    stroke(0, 0, 0, 50);
+    line(0, y, width, y);
+  }
 }
 
 // Update keyPressed function
