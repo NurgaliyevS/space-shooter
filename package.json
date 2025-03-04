@@ -4,8 +4,6 @@
   "description": "AI Space Shooter with Leaderboard",
   "main": "sketch.js",
   "scripts": {
-    "test": "node test-api.js",
-    "dev": "vercel dev",
     "deploy": "vercel"
   },
   "keywords": [
