@@ -10,13 +10,9 @@
     {
       "src": "/api/(.*)",
       "dest": "server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
     }
   ],
   "env": {
     "MONGODB_URI": "@mongodb_uri"
   }
-} 
+}

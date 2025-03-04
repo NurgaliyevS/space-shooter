@@ -202,9 +202,9 @@ function initializeGame() {
 
 // Fetch leaderboard data from our API
 function fetchLeaderboard() {
-    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    const apiUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
         ? 'http://localhost:3000/api/leaderboard' 
-        : '/api/leaderboard';
+        : window.location.origin + '/api/leaderboard';
         
     fetch(apiUrl)
         .then(response => response.json())
@@ -221,9 +221,9 @@ function fetchLeaderboard() {
 function submitScore(email, score) {
     isSubmittingScore = true;
     
-    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    const apiUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
         ? 'http://localhost:3000/api/submit-score' 
-        : '/api/submit-score';
+        : window.location.origin + '/api/submit-score';
         
     fetch(apiUrl, {
         method: 'POST',
