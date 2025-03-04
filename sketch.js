@@ -6,22 +6,52 @@ let stars = [];
 let score = 0;
 let gameOver = false;
 let lastShotTime = 0;
+let neuralPatterns = []; // For background effect
 
 function setup() {
   createCanvas(800, 600);
-  // Initialize player at center of canvas with size 20
   player = new Player(width / 2, height / 2, 20);
-  // Generate 100 stars with random positions and sizes
+  // Generate neural network background patterns
+  for (let i = 0; i < 20; i++) {
+    neuralPatterns.push({
+      x: random(width),
+      y: random(height),
+      connections: []
+    });
+    // Create random connections
+    for (let j = 0; j < 3; j++) {
+      neuralPatterns[i].connections.push({
+        x: neuralPatterns[i].x + random(-100, 100),
+        y: neuralPatterns[i].y + random(-100, 100),
+        alpha: random(50, 150)
+      });
+    }
+  }
+  // Generate stars
   for (let i = 0; i < 100; i++) {
     stars.push({ x: random(width), y: random(height), size: random(1, 3) });
   }
 }
 
 function draw() {
-  background(0); // Black background for space
+  background(0);
+  
+  // Draw neural network background
+  stroke(0, 150, 255, 30);
+  strokeWeight(1);
+  for (let pattern of neuralPatterns) {
+    for (let conn of pattern.connections) {
+      stroke(0, 150, 255, conn.alpha);
+      line(pattern.x, pattern.y, conn.x, conn.y);
+      noFill();
+      ellipse(conn.x, conn.y, 4, 4);
+    }
+    fill(0, 150, 255, 100);
+    ellipse(pattern.x, pattern.y, 6, 6);
+  }
 
   // Draw starry background
-  fill(255); // White color for stars
+  fill(255);
   noStroke();
   for (let star of stars) {
     ellipse(star.x, star.y, star.size);
@@ -89,16 +119,10 @@ function draw() {
     }
 
     // Display score
-    fill(255);
-    textSize(16);
-    text("Score: " + score, 10, 20);
+    drawScore();
   } else {
     // Game over screen
-    fill(255);
-    textSize(32);
-    textAlign(CENTER);
-    text("Game Over", width / 2, height / 2);
-    text("Final Score: " + score, width / 2, height / 2 + 40);
+    drawGameOver();
   }
 }
 
@@ -196,21 +220,86 @@ class Enemy {
     this.vy = vy;
     this.radius = radius;
     this.isAlive = true;
+    this.angle = random(TWO_PI);
+    this.rotationSpeed = random(-0.02, 0.02);
+    this.type = floor(random(3)); // 3 different AI ship types
+    this.pulsePhase = random(TWO_PI);
+    this.glowIntensity = random(150, 255);
   }
 
   update() {
     this.x += this.vx;
     this.y += this.vy;
-    // Remove enemy if it goes off the bottom
+    this.angle += this.rotationSpeed;
+    this.pulsePhase += 0.1;
     if (this.y > height) {
       this.isAlive = false;
     }
   }
 
   draw() {
-    // Draw enemy as a gray circle
-    fill(150);
-    ellipse(this.x, this.y, this.radius * 2);
+    push();
+    translate(this.x, this.y);
+    rotate(this.angle);
+    
+    // Pulsing glow effect
+    let glowSize = this.radius * 2 + sin(this.pulsePhase) * 5;
+    let glowAlpha = map(sin(this.pulsePhase), -1, 1, 50, 150);
+    
+    // Draw glow
+    noStroke();
+    for (let i = 3; i > 0; i--) {
+      fill(0, 150, 255, glowAlpha / (i * 2));
+      ellipse(0, 0, glowSize + i * 10);
+    }
+    
+    switch(this.type) {
+      case 0: // Hexagonal AI Core
+        stroke(0, 200, 255);
+        strokeWeight(2);
+        fill(0, 50, 100);
+        beginShape();
+        for (let i = 0; i < 6; i++) {
+          let angle = i * TWO_PI / 6;
+          vertex(cos(angle) * this.radius, sin(angle) * this.radius);
+        }
+        endShape(CLOSE);
+        // Inner details
+        stroke(0, 255, 255, this.glowIntensity);
+        line(-this.radius/2, 0, this.radius/2, 0);
+        line(0, -this.radius/2, 0, this.radius/2);
+        break;
+        
+      case 1: // Neural Network Node
+        stroke(255, 100, 200);
+        strokeWeight(2);
+        fill(100, 0, 100);
+        ellipse(0, 0, this.radius * 2);
+        // Synaptic connections
+        for (let i = 0; i < 4; i++) {
+          let angle = i * TWO_PI / 4;
+          stroke(255, 100, 200, this.glowIntensity);
+          line(cos(angle) * this.radius * 0.5, sin(angle) * this.radius * 0.5,
+               cos(angle) * this.radius, sin(angle) * this.radius);
+        }
+        break;
+        
+      case 2: // Quantum Computer Core
+        stroke(200, 255, 0);
+        strokeWeight(2);
+        fill(50, 100, 0);
+        // Draw quantum bits
+        for (let i = 0; i < 3; i++) {
+          rotate(TWO_PI / 3);
+          rect(-this.radius * 0.4, -this.radius * 0.4, 
+               this.radius * 0.8, this.radius * 0.8);
+        }
+        // Energy core
+        fill(200, 255, 0, this.glowIntensity);
+        ellipse(0, 0, this.radius * 0.8);
+        break;
+    }
+    pop();
   }
 }
 
@@ -239,4 +328,28 @@ class Bullet {
     fill(255);
     ellipse(this.x, this.y, this.radius * 2);
   }
+}
+
+// Update the score display to be more tech-themed
+function drawScore() {
+  fill(0, 150, 255);
+  noStroke();
+  rect(10, 10, 150, 30, 5);
+  fill(255);
+  textSize(16);
+  textAlign(LEFT, CENTER);
+  text("NEURAL SCORE: " + score, 20, 25);
+}
+
+// Update game over screen
+function drawGameOver() {
+  background(0, 0, 0, 200);
+  fill(0, 150, 255);
+  textSize(42);
+  textAlign(CENTER);
+  text("AI CORE TERMINATED", width/2, height/2 - 40);
+  textSize(24);
+  fill(255);
+  text("Neural Network Score: " + score, width/2, height/2 + 20);
+  text("Press SPACE to Reboot System", width/2, height/2 + 60);
 }
