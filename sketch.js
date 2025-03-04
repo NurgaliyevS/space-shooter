@@ -202,11 +202,15 @@ function initializeGame() {
 
 // Fetch leaderboard data from our API
 function fetchLeaderboard() {
-    fetch('https://space-shooter-2w1dpcw8y-nurgaliyevs-projects.vercel.app/api/leaderboard')
+    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:3000/api/leaderboard' 
+        : '/api/leaderboard';
+        
+    fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
             leaderboard = data;
-            console.log(data, 'data');
+            console.log('Leaderboard data loaded:', data);
         })
         .catch(error => {
             console.error('Error fetching leaderboard:', error);
@@ -216,7 +220,12 @@ function fetchLeaderboard() {
 // Submit score to the leaderboard
 function submitScore(email, score) {
     isSubmittingScore = true;
-    fetch('https://space-shooter-2w1dpcw8y-nurgaliyevs-projects.vercel.app/api/submit-score', {
+    
+    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:3000/api/submit-score' 
+        : '/api/submit-score';
+        
+    fetch(apiUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -226,15 +235,15 @@ function submitScore(email, score) {
         .then(response => response.json())
         .then(data => {
             isSubmittingScore = false;
-            submitMessage = 'Score submitted!';
+            submitMessage = data.message || 'Score submitted!';
             submitMessageTimer = 120; // Show message for 2 seconds
             fetchLeaderboard(); // Refresh leaderboard
         })
         .catch(error => {
+            console.error('Error submitting score:', error);
             isSubmittingScore = false;
             submitMessage = 'Error submitting score';
             submitMessageTimer = 120;
-            console.error('Error submitting score:', error);
         });
 }
 
@@ -628,6 +637,11 @@ function drawGameOver() {
             fill(255);
             textSize(16);
             text("Submitting score...", width/2, height/2 + 190);
+        } else if (submitMessage && submitMessageTimer > 0) {
+            fill(submitMessage.includes('Error') ? '#ff5555' : '#55ff55');
+            textSize(16);
+            text(submitMessage, width/2, height/2 + 190);
+            submitMessageTimer--;
         }
     } else {
         if (frameCount % 60 < 30) {

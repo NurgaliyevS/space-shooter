@@ -8,7 +8,8 @@ A retro-style space shooter game with a global leaderboard system.
 - Neural network-inspired visual effects
 - Sound effects using p5.js sound library
 - Global leaderboard system using MongoDB Atlas
-- Serverless API with Vercel
+- Express.js backend API
+- Serverless deployment with Vercel
 
 ## How to Play
 
@@ -28,10 +29,11 @@ A retro-style space shooter game with a global leaderboard system.
    ```
    MONGODB_URI=your_mongodb_atlas_connection_string
    ```
-4. Run locally:
+4. Run the Express server locally:
    ```
-   vercel dev
+   npm run dev
    ```
+5. Open your browser and navigate to `http://localhost:3000`
 
 ## Deployment
 
@@ -60,9 +62,22 @@ This project is set up for easy deployment on Vercel:
 5. Get your connection string from the Atlas dashboard
 6. Add your connection string to the `.env` file and Vercel environment variables
 
+## API Endpoints
+
+- `GET /api/leaderboard` - Get the top 10 scores
+- `POST /api/submit-score` - Submit a new score with email and score in the request body
+
 ## Technologies Used
 
 - p5.js for game rendering and sound
+- Express.js for backend API
 - MongoDB Atlas for database
 - Vercel for serverless functions and hosting
 - Node.js for backend API
+
+## Project Structure
+
+- `index.html` - Main HTML file
+- `sketch.js` - p5.js game code
+- `server.js` - Express.js server
+- `vercel.json` - Vercel deployment configuration
