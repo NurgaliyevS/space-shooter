@@ -40,46 +40,37 @@ function setup() {
 }
 
 function setupSound() {
+    // Wrap sound initialization in a try-catch
     try {
-        getAudioContext().resume();
-        soundEnabled = true;
-        
-        // Laser sound oscillator
-        laserOsc = new p5.Oscillator('square');
-        laserOsc.amp(0);
-        
-        // Explosion sound
-        explosionOsc = new p5.Noise();
-        explosionOsc.amp(0);
-        
-        // Thruster sound
-        thrusterOsc = new p5.Oscillator('square');
-        thrusterOsc.freq(200);
-        thrusterOsc.amp(0);
-        
-        // Rotation sound
-        rotationOsc = new p5.Oscillator('sawtooth');
-        rotationOsc.amp(0);
-        
-        // Brake sound
-        brakeOsc = new p5.Oscillator('triangle');
-        brakeOsc.amp(0);
-        
-        // Game over sound
-        gameOverOsc = new p5.Oscillator('square');
-        gameOverOsc.amp(0);
-        
-        // Start all oscillators if sound is enabled
-        if (soundEnabled) {
-            laserOsc.start();
-            explosionOsc.start();
-            thrusterOsc.start();
-            rotationOsc.start();
-            brakeOsc.start();
-            gameOverOsc.start();
+        // Check if p5.Sound is available
+        if (typeof p5.Sound !== 'undefined') {
+            getAudioContext().resume();
+            soundEnabled = true;
+            
+            // Create oscillators safely
+            laserOsc = new p5.Oscillator('square');
+            explosionOsc = new p5.Noise('white');
+            thrusterOsc = new p5.Oscillator('square');
+            rotationOsc = new p5.Oscillator('sawtooth');
+            brakeOsc = new p5.Oscillator('triangle');
+            gameOverOsc = new p5.Oscillator('square');
+            
+            // Start oscillators
+            [laserOsc, explosionOsc, thrusterOsc, rotationOsc, brakeOsc, gameOverOsc].forEach(osc => {
+                try {
+                    osc.start();
+                    osc.amp(0);
+                } catch (startError) {
+                    console.warn('Could not start oscillator:', startError);
+                }
+            });
+        } else {
+            console.warn('p5.Sound library not fully loaded');
+            soundEnabled = false;
         }
-    } catch (e) {
-        console.log('Sound system not available:', e);
+    } catch (error) {
+        console.error('Sound setup failed:', error);
+        soundEnabled = false;
     }
 }
 
