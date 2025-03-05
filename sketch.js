@@ -35,7 +35,7 @@ let gameOverOsc;
 function setup() {
     createCanvas(1000, 600); // Increased width to accommodate leaderboard
     initializeGame();
-    setupSound();
+    // setupSound();
     fetchLeaderboard();
 }
 
