@@ -555,7 +555,8 @@ function drawLeaderboard() {
     textAlign(LEFT);
     for (let i = 0; i < leaderboard.length && i < 10; i++) {
         let entry = leaderboard[i];
-        let displayEmail = entry.email;
+        // Only show the part before @ symbol
+        let displayEmail = entry.email.split('@')[0];
         if (displayEmail.length > 12) {
             displayEmail = displayEmail.substring(0, 9) + '...';
         }
